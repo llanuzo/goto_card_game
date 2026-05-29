@@ -1,0 +1,258 @@
+openapi: 3.0.4
+info:
+  title: Goto - Card game
+  version: 0.0.1
+servers:
+  - url: http://localhost/api/v1
+tags:
+  - name: Card Game
+paths:
+  /games:
+    get:
+      tags:
+        - Card Game
+      summary: List games
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ListResponse"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Game"
+    post:
+      tags:
+        - Card Game
+      summary: Create a game
+      description: |
+        - When a game is created it starts with 1 deck
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Game"
+  /games/{gameId}:
+    delete:
+      tags:
+        - Card Game
+      summary: Delete a game
+      parameters:
+        - $ref: "#/components/parameters/PathGameId"
+      responses:
+        "204":
+          description: No Content
+  /games/{gameId}/cards-by-suit:
+    get:
+      tags:
+        - Card Game
+      summary: Get the count of how many cards per suit are left
+      description: |
+        Get the count of how many cards per suit are left undealt in the game deck (example: 5 hearts, 3 spades, etc.)
+      parameters:
+        - $ref: "#/components/parameters/PathGameId"
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hearts:
+                    type: integer
+                  diamonds:
+                    type: integer
+                  spades:
+                    type: integer
+                  clubs:
+                    type: integer
+  /games/{gameId}/cards-by-value:
+    get:
+      tags:
+        - Card Game
+      summary: Get the count of each card (suit and value)
+      description: |
+        Get the count of each card (suit and value) remaining in the game deck sorted by suit ( hearts, spades, clubs, and diamonds) and face value from high value to low value (King, Queen, Jack, 10….2, Ace with value of 1)
+      parameters:
+        - $ref: "#/components/parameters/PathGameId"
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ListResponse"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: "#/components/schemas/Card"
+                            - type: object
+                              properties:
+                                remaining_count:
+                                  type: integer
+  /games/{gameId}/decks:
+    post:
+      tags:
+        - Card Game
+      summary: Add a deck to a game
+      description: |
+        - Please note that once a deck has been added to a game deck it cannot be removed.
+      parameters:
+        - $ref: "#/components/parameters/PathGameId"
+      responses:
+        "204":
+          description: No Content
+  /games/{gameId}/shuffle:
+    post:
+      tags:
+        - Card Game
+      summary: Shuffle the game deck (shoe)
+      description: |
+        - Shuffle returns no value, but results in the cards in the game deck being randomly permuted. Please do not use library-provided “shuffle” operations to implement this function. You may use library- provided random number generators in your solution.
+        - Shuffle can be called at any time
+
+      parameters:
+        - $ref: "#/components/parameters/PathGameId"
+      responses:
+        "204":
+          description: No Content
+  /games/{gameId}/players:
+    get:
+      tags:
+        - Card Game
+      summary: List players of a game
+      description: |
+        - Get the list of players in a game along with the total added value of all the cards each player holds; use face values of cards only. Then sort the list in descending order, from the player with the highest value hand to the player with the lowest value hand:
+        - For instance if player 'A' holds a 10 + King then her total value is 23 and player 'B' holds a 7 + Queen then his total value is 19,  so player 'A' will be listed first followed by player 'B'.
+      parameters:
+        - $ref: "#/components/parameters/PathGameId"
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ListResponse"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Player"
+                            
+    post:
+      tags:
+        - Card Game
+      summary: Add player to a game
+      parameters:
+        - $ref: "#/components/parameters/PathGameId"
+      responses:
+        "204":
+          description: No Content
+  /games/{gameId}/players/{playerId}:
+    delete:
+      tags:
+        - Card Game
+      summary: Remove player from a game
+      parameters:
+        - $ref: "#/components/parameters/PathGameId"
+        - $ref: "#/components/parameters/PathPlayerId"
+      responses:
+        "204":
+          description: No Content
+  /players/{playerId}/cards:
+    get:
+      tags:
+        - Card Game
+      summary: Get the list of cards for a player
+      parameters:
+        - $ref: "#/components/parameters/PathPlayerId"
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ListResponse"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Card"
+    post:
+      tags:
+        - Card Game
+      summary: Deal a card to a player
+      description: |
+        Specifically, for a game deck containing only one deck of cards, a call to shuffle followed by 52 calls to dealCards(1) for the same player should result in the caller being provided all 52 cards of the deck in a random order. If the caller then makes a 53rd call to dealCard(1), no card is dealt. This approach is to be followed if the game deck contains more than one deck.
+      parameters:
+        - $ref: "#/components/parameters/PathPlayerId"
+      responses:
+        "204":
+          description: No Content
+components:
+  parameters:
+    PathGameId:
+      name: gameId
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/TypeUuid"
+    PathPlayerId:
+      name: playerId
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/TypeUuid"
+  schemas:
+    Card:
+      type: object
+      properties:
+        value:
+          $ref: "#/components/schemas/TypeCardValue"
+        suit:
+          $ref: "#/components/schemas/TypeSuit"
+    Game:
+      type: object
+      properties:
+        game_id:
+          $ref: "#/components/schemas/TypeUuid"
+    Player:
+      type: object
+      properties:
+        player_id:
+          $ref: "#/components/schemas/TypeUuid"
+        cards_total:
+          type: integer
+    ListResponse:
+      type: object
+    TypeCardValue:
+      type: integer
+      minimum: 1
+      maximum: 13
+    TypeSuit:
+      type: string
+      description: Case insensitive
+      enum:
+        - hearts
+        - diamonds
+        - clubs
+        - spades
+    TypeUuid:
+      type: string
+      format: uuid
