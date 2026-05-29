@@ -15,7 +15,7 @@ type Api struct {
 	server *http.Server
 }
 
-func NewApi(port int, svcs service.Services) Api {
+func NewApi(port int, game service.Game) Api {
 	r := mux.NewRouter()
 
 	api := Api{
@@ -30,9 +30,12 @@ func NewApi(port int, svcs service.Services) Api {
 	r = r.PathPrefix("/api/v1").Subrouter().StrictSlash(false)
 	r.Use(mwLoggerInContext)
 
-	games := controller.NewGames()
+	games := controller.NewGames(game)
 
-	api.addRoute(r, http.MethodPost, "/games", games.PostGames)
+	api.addRoute(r, http.MethodGet, "/games", games.List)
+	api.addRoute(r, http.MethodPost, "/games", games.Post)
+	api.addRoute(r, http.MethodDelete, "/games/{id1}", games.Delete)
+	api.addRoute(r, http.MethodGet, "/games/{id1}/cards-by-suit", games.GetCardsBySuit)
 
 	return api
 }

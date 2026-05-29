@@ -24,7 +24,7 @@ func Start(conf config.App, logger *log.Logger) error {
 		logger.Infof("exiting card-game")
 	}()
 
-	svcs := service.NewServices()
+	svcs := service.NewGame()
 
 	httpApi := http.NewApi(conf.HttpPort, svcs)
 	go func() {
