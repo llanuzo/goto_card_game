@@ -2,7 +2,11 @@ module github.com/llanuzo/card-game
 
 go 1.26.3
 
-require github.com/stretchr/testify v1.11.1
+require (
+	github.com/google/uuid v1.6.0
+	github.com/gorilla/mux v1.8.1
+	github.com/stretchr/testify v1.11.1
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect

@@ -3,10 +3,11 @@ package log
 import (
 	"bytes"
 	"encoding/json"
-	"log/slog"
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -15,25 +16,23 @@ func TestNewLogger(t *testing.T) {
 	t.Run("all default fields are set when logger", func(t *testing.T) {
 
 		loggerName := "test-logger"
-		extraField1 := "extra_field_1"
-		extraVal1 := "extra_val_1"
-		logMsg := "test-log"
+		logFormat := "test-log: %s"
+		logFormatInput := uuid.NewString()
 
 		var buf bytes.Buffer
 		logger := NewLogger(loggerName, WithWriter(&buf))
 
-		logger.Info(logMsg, slog.String(extraField1, extraVal1))
+		logger.Infof(logFormat, logFormatInput)
 
 		got := buf.Bytes()
 
 		jsonLog := struct {
-			Time        time.Time      `json:"time"`
-			Level       string         `json:"level"`
-			Source      map[string]any `json:"source"`
-			Msg         string         `json:"msg"`
-			App         string         `json:"app"`
-			LoggerName  string         `json:"logger_name"`
-			ExtraField1 string         `json:"extra_field_1"`
+			Time       time.Time      `json:"time"`
+			Level      string         `json:"level"`
+			Source     map[string]any `json:"source"`
+			Msg        string         `json:"msg"`
+			App        string         `json:"app"`
+			LoggerName string         `json:"logger_name"`
 		}{}
 
 		err := json.Unmarshal(got, &jsonLog)
@@ -44,17 +43,17 @@ func TestNewLogger(t *testing.T) {
 		assert.NotEmpty(t, jsonLog.Source)
 		assert.Equal(t, "card-game", jsonLog.App)
 		assert.Equal(t, loggerName, jsonLog.LoggerName)
-		assert.Equal(t, extraVal1, jsonLog.ExtraField1)
+		assert.Equal(t, fmt.Sprintf(logFormat, logFormatInput), jsonLog.Msg)
 	})
 
 	t.Run("default log level is info", func(t *testing.T) {
 		var buf bytes.Buffer
 		logger := NewLogger("test-logger", WithWriter(&buf))
 
-		logger.Debug("DEBUG")
-		logger.Info("INFO")
-		logger.Warn("WARN")
-		logger.Error("ERROR")
+		logger.Debugf("DEBUG")
+		logger.Infof("INFO")
+		logger.Warnf("WARN")
+		logger.Errorf("ERROR")
 		got := buf.String()
 
 		assert.NotContains(t, got, "DEBUG")

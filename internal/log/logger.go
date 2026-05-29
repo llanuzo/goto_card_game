@@ -7,6 +7,14 @@ import (
 	"os"
 )
 
+var (
+	FallbackLogger *Logger
+)
+
+func init() {
+	FallbackLogger = NewLogger("fallback-logger")
+}
+
 type options struct {
 	defaultLogLevel slog.Level
 	writer          io.Writer
@@ -20,7 +28,7 @@ func WithWriter(w io.Writer) option {
 	}
 }
 
-func NewLogger(loggerName string, opts ...option) *slog.Logger {
+func NewLogger(loggerName string, opts ...option) *Logger {
 	options := options{
 		defaultLogLevel: slog.LevelInfo,
 		writer:          os.Stdout,
@@ -45,5 +53,38 @@ func NewLogger(loggerName string, opts ...option) *slog.Logger {
 	}))
 	logger = logger.With(slog.String("app", "card-game"), slog.String("logger_name", loggerName))
 
-	return logger
+	return newLogger(logger)
+}
+
+type Logger struct {
+	Logger *slog.Logger
+}
+
+func newLogger(logger *slog.Logger) *Logger {
+	var l Logger
+	l.Logger = logger
+
+	return &l
+}
+
+func (l *Logger) With(args ...any) *Logger {
+	l.Logger = l.Logger.With(args...)
+
+	return l
+}
+
+func (l *Logger) Debugf(msg string, args ...any) {
+	l.Logger.Debug(fmt.Sprintf(msg, args...))
+}
+
+func (l *Logger) Infof(msg string, args ...any) {
+	l.Logger.Info(fmt.Sprintf(msg, args...))
+}
+
+func (l *Logger) Warnf(msg string, args ...any) {
+	l.Logger.Warn(fmt.Sprintf(msg, args...))
+}
+
+func (l *Logger) Errorf(msg string, args ...any) {
+	l.Logger.Error(fmt.Sprintf(msg, args...))
 }
