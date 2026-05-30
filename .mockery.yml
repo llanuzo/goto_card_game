@@ -1,10 +1,10 @@
-dir: '{{.InterfaceDir}}/genmock'
-structname: '{{.InterfaceName}}'
-pkgname: '{{.SrcPackageName}}genmock'
-filename: '{{.InterfaceName | snakecase}}.go'
+dir: "{{.InterfaceDir}}/genmock"
+structname: "{{.InterfaceName}}"
+pkgname: "{{.SrcPackageName}}genmock"
+filename: "{{.InterfaceName | snakecase}}.go"
 template: testify
-# # Packages is required: mockery will fail if there's not atleast 1 specified
-# packages:
-#   github.com/llanuzo/exampleapp/internal/service:
-#     config:
-#       all: true
+packages:
+  github.com/llanuzo/card-game/internal/service:
+    config:
+      all: true
+      pkgname: "svcgenmock"

@@ -17,3 +17,15 @@
 [2026-05-30T04:16:34Z] USER: add test for the rest of @internal/service/svcmodel/
 [2026-05-30T04:17:21Z] ASSISTANT TURN COMPLETE
 ---
+[2026-05-30T04:20:42Z] USER: what would be a good way to reduce redundancy in @internal/http/controller/game.go
+[2026-05-30T04:28:28Z] USER: write a test for only 1 function in @internal/http/controller/game.go
+[2026-05-30T04:29:37Z] ASSISTANT TURN COMPLETE
+---
+[2026-05-30T04:29:42Z] SESSION STARTED (id: a69d5c6c-dea9-41ed-bf8a-f7591e9f6114)
+[2026-05-30T04:29:52Z] USER: search for race conditions in the project
+[2026-05-30T04:32:00Z] ASSISTANT TURN COMPLETE
+---
+[2026-05-30T04:37:18Z] USER: write a tests following the existing test in @internal/http/controller/game.go
+[2026-05-30T04:37:52Z] USER: write the rest of the tests following the existing test in @internal/http/controller/game.go
+[2026-05-30T04:41:26Z] ASSISTANT TURN COMPLETE
+---
