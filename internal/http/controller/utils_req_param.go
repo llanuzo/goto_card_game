@@ -9,6 +9,7 @@ import (
 
 const (
 	PathId1 = "id1"
+	PathId2 = "id2"
 )
 
 func loadUuidFromPath(r *http.Request, name string) (uuid.UUID, error) {

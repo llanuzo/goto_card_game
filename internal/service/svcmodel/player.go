@@ -20,15 +20,19 @@ func NewPlayer() *Player {
 	}
 }
 
-func (m *Player) ToHttp() *httpapi.Player {
+func (m *Player) CardTotal() int {
 	var cardsTotal int
 	for _, val := range m.Cards.All() {
 		cardsTotal += int(val.Value)
 	}
 
+	return cardsTotal
+}
+
+func (m *Player) ToHttp() *httpapi.Player {
 	return &httpapi.Player{
 		Id:         httpapi.NewUuid(m.Id),
-		CardsTotal: cardsTotal,
+		CardsTotal: m.CardTotal(),
 	}
 }
 
@@ -49,7 +53,7 @@ func (m *Players) Add(player *Player) {
 	m.players[player.Id] = player
 }
 
-func (m *Players) Remove(id uuid.UUID) bool {
+func (m *Players) Delete(id uuid.UUID) bool {
 	m.mu.Lock()
 	defer m.mu.Unlock() // Ensures unlock even if a panic occurs
 	if _, ok := m.players[id]; ok {

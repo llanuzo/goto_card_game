@@ -19,8 +19,10 @@ type Game interface {
 	AddPlayer(gameId uuid.UUID) (*svcmodel.Player, error)
 	Create() *svcmodel.Game
 	Delete(gameId uuid.UUID) error
+	DeletePlayer(gameId, playerId uuid.UUID) error
 	GetCardsBySuit(gameId uuid.UUID) (map[svcmodel.CardSuit]int, error)
 	List() []*svcmodel.Game
+	ListPlayers(gameId uuid.UUID) ([]*svcmodel.Player, error)
 	ListCardCounts(gameId uuid.UUID) ([]svcmodel.CardCount, error)
 	Shuffle(gameId uuid.UUID) error
 }
@@ -175,6 +177,38 @@ func (s *game) AddPlayer(gameId uuid.UUID) (*svcmodel.Player, error) {
 	game.Players.Add(player)
 
 	return player, nil
+}
+
+func (s *game) DeletePlayer(gameId, playerId uuid.UUID) error {
+	game, err := s.getGame(gameId)
+	if err != nil {
+		return err
+	}
+
+	deleted := game.Players.Delete(playerId)
+	if !deleted {
+		return ErrGameNotFound
+	}
+
+	return nil
+}
+
+func (s *game) ListPlayers(gameId uuid.UUID) ([]*svcmodel.Player, error) {
+	game, err := s.getGame(gameId)
+	if err != nil {
+		return nil, err
+	}
+
+	var players []*svcmodel.Player
+	for _, player := range game.Players.All() {
+		players = append(players, player)
+	}
+
+	slices.SortFunc(players, func(a, b *svcmodel.Player) int {
+		return cmp.Compare(b.CardTotal(), a.CardTotal())
+	})
+
+	return players, nil
 }
 
 func (s *game) getGame(gameId uuid.UUID) (*svcmodel.Game, error) {

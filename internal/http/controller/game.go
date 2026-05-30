@@ -154,3 +154,49 @@ func (c Games) AddPlayer(w http.ResponseWriter, r *http.Request) error {
 
 	return writeJson(w, http.StatusOK, player.ToHttp())
 }
+
+func (c Games) DeletePlayer(w http.ResponseWriter, r *http.Request) error {
+	gameId, err := loadUuidFromPath(r, PathId1)
+	if err != nil {
+		return err
+	}
+
+	playerId, err := loadUuidFromPath(r, PathId2)
+	if err != nil {
+		return err
+	}
+
+	err = c.game.DeletePlayer(gameId, playerId)
+	if err != nil {
+		if errors.Is(err, service.ErrGameNotFound) {
+			return newErrApiResponse(http.StatusNotFound, "game id %s does not exist", gameId)
+		}
+
+		return err
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+	return nil
+}
+
+func (c Games) ListPlayers(w http.ResponseWriter, r *http.Request) error {
+	gameId, err := loadUuidFromPath(r, PathId1)
+	if err != nil {
+		return err
+	}
+
+	players, err := c.game.ListPlayers(gameId)
+	if err != nil {
+		if errors.Is(err, service.ErrGameNotFound) {
+			return newErrApiResponse(http.StatusNotFound, "game id %s does not exist", gameId)
+		}
+
+		return err
+	}
+
+	listResp := httpapi.NewListResponse(len(players), func(i int) httpapi.ListResponseItem[*httpapi.Player] {
+		return players[i]
+	})
+
+	return writeJson(w, http.StatusOK, &listResp)
+}
