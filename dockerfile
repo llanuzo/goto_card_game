@@ -12,7 +12,6 @@ FROM alpine:latest
 RUN adduser -D appuser
 USER appuser
 WORKDIR /app
-COPY ./config.yml ./config.yml
 COPY --from=builder /app/main .
-EXPOSE 8080
+EXPOSE 8080 10001
 CMD ["./main"]

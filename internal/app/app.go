@@ -9,6 +9,9 @@ import (
 
 	"github.com/llanuzo/card-game/internal/config"
 	"github.com/llanuzo/card-game/internal/log"
+	"github.com/llanuzo/card-game/internal/monitor"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 
 	"github.com/llanuzo/card-game/internal/http"
 	"github.com/llanuzo/card-game/internal/service"
@@ -24,6 +27,10 @@ func Start(conf config.App, logger *log.Logger) error {
 		logger.Infof("exiting card-game")
 	}()
 
+	reg := prometheus.NewRegistry()
+	wrappedReg := prometheus.WrapRegistererWith(prometheus.Labels{"app": conf.AppName, "env": conf.Env}, reg)
+	wrappedReg.MustRegister(collectors.NewGoCollector(), collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
+
 	svcs := service.NewGame()
 
 	httpApi := http.NewApi(conf.HttpPort, svcs)
@@ -32,6 +39,15 @@ func Start(conf config.App, logger *log.Logger) error {
 		err := httpApi.Start()
 		if err != nil {
 			logger.Errorf("http server returned an err: %v", err)
+			GracefulShutdown(logger)
+		}
+	}()
+	metricsServer := monitor.NewServer(reg, conf.MetricsPort, conf.PProfEnabled)
+	go func() {
+		logger.Infof("metrics server on port %d", conf.MetricsPort)
+		err := metricsServer.Start()
+		if err != nil {
+			logger.Errorf("metrics server returned an err: %v", err)
 			GracefulShutdown(logger)
 		}
 	}()
@@ -45,6 +61,7 @@ func Start(conf config.App, logger *log.Logger) error {
 
 	shutdowners := []shutdowner{
 		httpApi,
+		metricsServer,
 	}
 
 	for _, val := range shutdowners {

@@ -1,6 +1,6 @@
-.PHONY: check run docker genmocks
+.PHONY: check run test docker genmocks
 
-check: test
+check: test genmocks
 	go mod tidy
 	staticcheck ./...
 	gofmt -s -w .
@@ -14,10 +14,11 @@ test:
 	go test -timeout 30s -tags unit,store,integration ./...
 
 docker:
+	docker stop card-game || true
+	docker rm card-game || true
 	docker build -t card-game .
-	docker run -p 8080:8080 card-game
+	docker run -d --name card-game -p 8080:8080 -p 10001:10001 card-game
 
-# Will fail if there are no packages specified in .mockery.yml
 genmocks:
 	mockery --config .mockery.yml
 	
