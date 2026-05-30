@@ -200,3 +200,58 @@ func (c Games) ListPlayers(w http.ResponseWriter, r *http.Request) error {
 
 	return writeJson(w, http.StatusOK, &listResp)
 }
+
+func (c Games) ListPlayersCards(w http.ResponseWriter, r *http.Request) error {
+	gameId, err := loadUuidFromPath(r, PathId1)
+	if err != nil {
+		return err
+	}
+
+	playerId, err := loadUuidFromPath(r, PathId2)
+	if err != nil {
+		return err
+	}
+
+	cards, err := c.game.ListPlayersCards(gameId, playerId)
+	if err != nil {
+		if errors.Is(err, service.ErrGameNotFound) {
+			return newErrApiResponse(http.StatusNotFound, "game %s does not exist", gameId)
+		} else if errors.Is(err, service.ErrPlayerNotFound) {
+			return newErrApiResponse(http.StatusNotFound, "player %s does not exist", gameId)
+		}
+
+		return err
+	}
+
+	listResp := httpapi.NewListResponse(len(cards), func(i int) httpapi.ListResponseItem[httpapi.Card] {
+		return cards[i]
+	})
+
+	return writeJson(w, http.StatusOK, &listResp)
+}
+
+func (c Games) PostPlayerCard(w http.ResponseWriter, r *http.Request) error {
+	gameId, err := loadUuidFromPath(r, PathId1)
+	if err != nil {
+		return err
+	}
+
+	playerId, err := loadUuidFromPath(r, PathId2)
+	if err != nil {
+		return err
+	}
+
+	err = c.game.DealCard(gameId, playerId)
+	if err != nil {
+		if errors.Is(err, service.ErrGameNotFound) {
+			return newErrApiResponse(http.StatusNotFound, "game %s does not exist", gameId)
+		} else if errors.Is(err, service.ErrPlayerNotFound) {
+			return newErrApiResponse(http.StatusNotFound, "player %s does not exist", gameId)
+		}
+
+		return err
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+	return nil
+}

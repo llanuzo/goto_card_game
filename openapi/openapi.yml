@@ -172,12 +172,13 @@ paths:
       responses:
         "204":
           description: No Content
-  /players/{playerId}/cards:
+  /games/{gameId}/players/{playerId}/cards:
     get:
       tags:
         - Card Game
       summary: Get the list of cards for a player
       parameters:
+        - $ref: "#/components/parameters/PathGameId"
         - $ref: "#/components/parameters/PathPlayerId"
       responses:
         "200":
@@ -200,6 +201,7 @@ paths:
       description: |
         Specifically, for a game deck containing only one deck of cards, a call to shuffle followed by 52 calls to dealCards(1) for the same player should result in the caller being provided all 52 cards of the deck in a random order. If the caller then makes a 53rd call to dealCard(1), no card is dealt. This approach is to be followed if the game deck contains more than one deck.
       parameters:
+        - $ref: "#/components/parameters/PathGameId"
         - $ref: "#/components/parameters/PathPlayerId"
       responses:
         "204":
@@ -222,6 +224,8 @@ components:
     Card:
       type: object
       properties:
+        id:
+          type: string
         face_value:
           $ref: "#/components/schemas/TypeCardValue"
         suit:

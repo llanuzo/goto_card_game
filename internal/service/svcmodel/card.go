@@ -13,6 +13,14 @@ type Card struct {
 	Suit  CardSuit
 }
 
+func (m Card) ToHttp() httpapi.Card {
+	return httpapi.Card{
+		Id:        fmt.Sprintf("%d_%s", m.Value, m.Suit),
+		Suit:      m.Suit.String(),
+		FaceValue: int(m.Value),
+	}
+}
+
 type CardCount struct {
 	Card
 	Count int
@@ -20,11 +28,7 @@ type CardCount struct {
 
 func (m CardCount) ToHttp() httpapi.CardCount {
 	return httpapi.CardCount{
-		Card: httpapi.Card{
-			Id:        fmt.Sprintf("%d_%s", m.Value, m.Suit),
-			Suit:      m.Suit.String(),
-			FaceValue: int(m.Value),
-		},
+		Card:  m.Card.ToHttp(),
 		Count: m.Count,
 	}
 }

@@ -47,15 +47,27 @@ func NewPlayers() *Players {
 	}
 }
 
+func (m *Players) Load(id uuid.UUID) (*Player, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	player, found := m.players[id]
+	if !found {
+		return nil, false
+	}
+
+	return player, true
+}
+
 func (m *Players) Add(player *Player) {
 	m.mu.Lock()
-	defer m.mu.Unlock() // Ensures unlock even if a panic occurs
+	defer m.mu.Unlock()
 	m.players[player.Id] = player
 }
 
 func (m *Players) Delete(id uuid.UUID) bool {
 	m.mu.Lock()
-	defer m.mu.Unlock() // Ensures unlock even if a panic occurs
+	defer m.mu.Unlock()
 	if _, ok := m.players[id]; ok {
 		delete(m.players, id)
 		return true

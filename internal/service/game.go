@@ -11,7 +11,8 @@ import (
 )
 
 var (
-	ErrGameNotFound = errors.New("game does not exist")
+	ErrGameNotFound   = errors.New("game does not exist")
+	ErrPlayerNotFound = errors.New("player does not exist")
 )
 
 type Game interface {
@@ -23,8 +24,11 @@ type Game interface {
 	GetCardsBySuit(gameId uuid.UUID) (map[svcmodel.CardSuit]int, error)
 	List() []*svcmodel.Game
 	ListPlayers(gameId uuid.UUID) ([]*svcmodel.Player, error)
+	ListPlayersCards(gameId uuid.UUID, playerId uuid.UUID) ([]svcmodel.Card, error)
 	ListCardCounts(gameId uuid.UUID) ([]svcmodel.CardCount, error)
+
 	Shuffle(gameId uuid.UUID) error
+	DealCard(gameId uuid.UUID, playerId uuid.UUID) error
 }
 
 type game struct {
@@ -209,6 +213,36 @@ func (s *game) ListPlayers(gameId uuid.UUID) ([]*svcmodel.Player, error) {
 	})
 
 	return players, nil
+}
+
+func (s *game) ListPlayersCards(gameId uuid.UUID, playerId uuid.UUID) ([]svcmodel.Card, error) {
+	game, err := s.getGame(gameId)
+	if err != nil {
+		return nil, err
+	}
+
+	player, ok := game.Players.Load(playerId)
+	if !ok {
+		return nil, ErrPlayerNotFound
+	}
+
+	return player.Cards.All(), nil
+}
+
+func (s *game) DealCard(gameId uuid.UUID, playerId uuid.UUID) error {
+	game, err := s.getGame(gameId)
+	if err != nil {
+		return err
+	}
+
+	player, ok := game.Players.Load(playerId)
+	if !ok {
+		return ErrPlayerNotFound
+	}
+
+	player.Cards.Append([]svcmodel.Card{game.Cards.Next()})
+
+	return nil
 }
 
 func (s *game) getGame(gameId uuid.UUID) (*svcmodel.Game, error) {
