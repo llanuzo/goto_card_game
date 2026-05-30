@@ -120,3 +120,9 @@
 [2026-05-30T06:01:52Z] ASSISTANT: Updated e2e tests in api_test.go to add explicit addDeck() calls after Create() following the removal of auto-deck seeding; all 7 tests pass with -race.
 [2026-05-30T06:01:54Z] ASSISTANT TURN COMPLETE
 ---
+[2026-05-30T06:02:58Z] USER: can you show me how would you fix #4
+[2026-05-30T06:03:16Z] SESSION STARTED (id: b0642dcf-7bb4-4e98-86bd-e5b6855790f5)
+[2026-05-30T06:03:41Z] USER: add tests for @internal/service/game.go follow the convention of the other tests
+[2026-05-30T06:06:40Z] ASSISTANT: Added unit tests for internal/service/game.go covering all 10 service methods with happy path and error cases, matching the project test conventions (build tag, t.Parallel, testify).
+[2026-05-30T06:06:47Z] ASSISTANT TURN COMPLETE
+---
