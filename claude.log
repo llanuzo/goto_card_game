@@ -108,3 +108,7 @@
 [2026-05-30T05:35:21Z] ASSISTANT: Added log-responses rule to CLAUDE.md and memory; Stop hook already handles TURN COMPLETE marker automatically.
 [2026-05-30T05:35:25Z] ASSISTANT TURN COMPLETE
 ---
+[2026-05-30T05:44:31Z] USER: do you see any major problems in the service? Any comments to help me improve it
+[2026-05-30T05:45:39Z] ASSISTANT: Reviewed the service layer and reported 6 issues: biased Shuffle algorithm (non-Fisher-Yates), Shuffle panic on empty deck, silent success on empty-deck deal, O(S×N) nested loop in ListCardCounts, auto-seeding deck in Create(), and expensive deep-copy on every ListPlayers call.
+[2026-05-30T05:45:41Z] ASSISTANT TURN COMPLETE
+---

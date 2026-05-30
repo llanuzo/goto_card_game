@@ -1,4 +1,4 @@
-.PHONY: check run test docker genmocks
+.PHONY: check run test e2e docker genmocks
 
 check: test genmocks
 	go mod tidy
@@ -12,6 +12,9 @@ run:
 	
 test: 
 	go test -timeout 30s -tags unit,store,integration ./...
+
+e2e: 
+	go test -timeout 30s -tags e2e ./...
 
 docker:
 	docker stop card-game || true
