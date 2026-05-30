@@ -93,18 +93,27 @@ func TestCards_Next(t *testing.T) {
 func TestCards_Shuffle(t *testing.T) {
 	t.Parallel()
 
-	cards := NewCards()
-	input := []Card{
-		{Value: 1, Suit: CardSuit_Hearts},
-		{Value: 2, Suit: CardSuit_Diamonds},
-		{Value: 3, Suit: CardSuit_Spades},
-		{Value: 4, Suit: CardSuit_Clubs},
-		{Value: 5, Suit: CardSuit_Hearts},
-	}
-	cards.Append(input)
-	cards.Shuffle()
+	t.Run("shuffle on empty deck", func(t *testing.T) {
+		t.Parallel()
+		cards := NewCards()
+		cards.Shuffle()
+	})
 
-	all := cards.All()
-	assert.Len(t, all, len(input))
-	assert.ElementsMatch(t, input, all)
+	t.Run("next with no cards returns not ok", func(t *testing.T) {
+		t.Parallel()
+		cards := NewCards()
+		input := []Card{
+			{Value: 1, Suit: CardSuit_Hearts},
+			{Value: 2, Suit: CardSuit_Diamonds},
+			{Value: 3, Suit: CardSuit_Spades},
+			{Value: 4, Suit: CardSuit_Clubs},
+			{Value: 5, Suit: CardSuit_Hearts},
+		}
+		cards.Append(input)
+		cards.Shuffle()
+
+		all := cards.All()
+		assert.Len(t, all, len(input))
+		assert.ElementsMatch(t, input, all)
+	})
 }

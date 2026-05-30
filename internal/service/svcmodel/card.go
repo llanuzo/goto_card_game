@@ -79,6 +79,10 @@ func (m *Cards) Shuffle() {
 	// Shuffle by randomly selecting 2 indexes and swap
 	// Do it by a factor of the cardLen just to make sure it shuffles enough
 	cardLen := len(m.cards)
+	if cardLen == 0 {
+		return
+	}
+
 	for range cardLen * 10 {
 		p1 := rand.IntN(cardLen)
 		p2 := rand.IntN(cardLen)
