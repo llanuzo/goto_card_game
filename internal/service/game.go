@@ -41,9 +41,6 @@ func NewGame() Game {
 }
 
 func (s *game) List() []*svcmodel.Game {
-	game := svcmodel.NewGame(uuid.New())
-	game.Cards.Append(s.newDeck())
-
 	games := s.games.All()
 
 	slices.SortFunc(games, func(a, b *svcmodel.Game) int {
@@ -190,7 +187,7 @@ func (s *game) DeletePlayer(gameId, playerId uuid.UUID) error {
 
 	deleted := game.Players.Delete(playerId)
 	if !deleted {
-		return ErrGameNotFound
+		return ErrPlayerNotFound
 	}
 
 	return nil
