@@ -16,6 +16,7 @@ var (
 
 type Game interface {
 	AddDeck(gameId uuid.UUID) error
+	AddPlayer(gameId uuid.UUID) (*svcmodel.Player, error)
 	Create() *svcmodel.Game
 	Delete(gameId uuid.UUID) error
 	GetCardsBySuit(gameId uuid.UUID) (map[svcmodel.CardSuit]int, error)
@@ -66,9 +67,9 @@ func (s *game) Delete(gameId uuid.UUID) error {
 }
 
 func (s *game) GetCardsBySuit(gameId uuid.UUID) (map[svcmodel.CardSuit]int, error) {
-	game, ok := s.games.Load(gameId)
-	if !ok {
-		return nil, ErrGameNotFound
+	game, err := s.getGame(gameId)
+	if err != nil {
+		return nil, err
 	}
 
 	var heartsCount int
@@ -98,9 +99,9 @@ func (s *game) GetCardsBySuit(gameId uuid.UUID) (map[svcmodel.CardSuit]int, erro
 }
 
 func (s *game) ListCardCounts(gameId uuid.UUID) ([]svcmodel.CardCount, error) {
-	game, ok := s.games.Load(gameId)
-	if !ok {
-		return nil, ErrGameNotFound
+	game, err := s.getGame(gameId)
+	if err != nil {
+		return nil, err
 	}
 
 	cardCountMap := make(map[svcmodel.Card]int)
@@ -144,9 +145,9 @@ func (s *game) ListCardCounts(gameId uuid.UUID) ([]svcmodel.CardCount, error) {
 }
 
 func (s *game) AddDeck(gameId uuid.UUID) error {
-	game, ok := s.games.Load(gameId)
-	if !ok {
-		return ErrGameNotFound
+	game, err := s.getGame(gameId)
+	if err != nil {
+		return err
 	}
 
 	game.Cards.Append(s.newDeck())
@@ -155,14 +156,34 @@ func (s *game) AddDeck(gameId uuid.UUID) error {
 }
 
 func (s *game) Shuffle(gameId uuid.UUID) error {
-	game, ok := s.games.Load(gameId)
-	if !ok {
-		return ErrGameNotFound
+	game, err := s.getGame(gameId)
+	if err != nil {
+		return err
 	}
 
 	game.Cards.Shuffle()
 
 	return nil
+}
+
+func (s *game) AddPlayer(gameId uuid.UUID) (*svcmodel.Player, error) {
+	game, err := s.getGame(gameId)
+	if err != nil {
+		return nil, err
+	}
+	player := svcmodel.NewPlayer()
+	game.Players.Add(player)
+
+	return player, nil
+}
+
+func (s *game) getGame(gameId uuid.UUID) (*svcmodel.Game, error) {
+	game, ok := s.games.Load(gameId)
+	if !ok {
+		return nil, ErrGameNotFound
+	}
+
+	return game, nil
 }
 
 func (s *game) newDeck() []svcmodel.Card {

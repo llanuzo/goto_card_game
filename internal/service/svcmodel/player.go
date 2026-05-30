@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
+	"github.com/llanuzo/card-game/pkg/httpapi"
 )
 
 type Player struct {
@@ -12,10 +13,22 @@ type Player struct {
 	Cards *Cards
 }
 
-func NewPlayer(id uuid.UUID) *Player {
+func NewPlayer() *Player {
 	return &Player{
-		Id:    id,
+		Id:    uuid.New(),
 		Cards: NewCards(),
+	}
+}
+
+func (m *Player) ToHttp() *httpapi.Player {
+	var cardsTotal int
+	for _, val := range m.Cards.All() {
+		cardsTotal += int(val.Value)
+	}
+
+	return &httpapi.Player{
+		Id:         httpapi.NewUuid(m.Id),
+		CardsTotal: cardsTotal,
 	}
 }
 
@@ -30,17 +43,17 @@ func NewPlayers() *Players {
 	}
 }
 
-func (m *Players) Add(key uuid.UUID, value *Player) {
+func (m *Players) Add(player *Player) {
 	m.mu.Lock()
 	defer m.mu.Unlock() // Ensures unlock even if a panic occurs
-	m.players[key] = value
+	m.players[player.Id] = player
 }
 
-func (m *Players) Remove(key uuid.UUID) bool {
+func (m *Players) Remove(id uuid.UUID) bool {
 	m.mu.Lock()
 	defer m.mu.Unlock() // Ensures unlock even if a panic occurs
-	if _, ok := m.players[key]; ok {
-		delete(m.players, key)
+	if _, ok := m.players[id]; ok {
+		delete(m.players, id)
 		return true
 	}
 
