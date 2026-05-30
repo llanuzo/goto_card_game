@@ -1,0 +1,316 @@
+//go:build e2e
+
+package http_test
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	cardhttp "github.com/llanuzo/card-game/internal/http"
+	"github.com/llanuzo/card-game/internal/service"
+	"github.com/llanuzo/card-game/pkg/httpapi"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+// e2eSuite wires a real service + real router into an in-process httptest server.
+type e2eSuite struct {
+	t       *testing.T
+	baseURL string
+}
+
+func newE2ESuite(t *testing.T) *e2eSuite {
+	t.Helper()
+	svc := service.NewGame()
+	api := cardhttp.NewApi(0, svc)
+	srv := httptest.NewServer(api.Handler())
+	t.Cleanup(srv.Close)
+	return &e2eSuite{t: t, baseURL: srv.URL + "/api/v1"}
+}
+
+func (s *e2eSuite) do(method, path string) *http.Response {
+	s.t.Helper()
+	req, err := http.NewRequest(method, s.baseURL+path, nil)
+	require.NoError(s.t, err)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(s.t, err)
+	return resp
+}
+
+func (s *e2eSuite) mustStatus(resp *http.Response, want int) {
+	s.t.Helper()
+	defer resp.Body.Close()
+	assert.Equal(s.t, want, resp.StatusCode)
+}
+
+func (s *e2eSuite) decode(resp *http.Response, want int, v any) {
+	s.t.Helper()
+	defer resp.Body.Close()
+	require.Equal(s.t, want, resp.StatusCode)
+	require.NoError(s.t, json.NewDecoder(resp.Body).Decode(v))
+}
+
+func (s *e2eSuite) createGame() string {
+	s.t.Helper()
+	var g httpapi.Game
+	s.decode(s.do(http.MethodPost, "/games"), http.StatusOK, &g)
+	return g.GameId.UUID.String()
+}
+
+func (s *e2eSuite) addDeck(gameId string) {
+	s.t.Helper()
+	s.mustStatus(s.do(http.MethodPost, "/games/"+gameId+"/add-deck"), http.StatusNoContent)
+}
+
+func (s *e2eSuite) shuffle(gameId string) {
+	s.t.Helper()
+	s.mustStatus(s.do(http.MethodPost, "/games/"+gameId+"/shuffle"), http.StatusNoContent)
+}
+
+func (s *e2eSuite) addPlayer(gameId string) string {
+	s.t.Helper()
+	var p httpapi.Player
+	s.decode(s.do(http.MethodPost, "/games/"+gameId+"/players"), http.StatusOK, &p)
+	return p.Id.UUID.String()
+}
+
+func (s *e2eSuite) dealCard(gameId, playerId string) {
+	s.t.Helper()
+	s.mustStatus(
+		s.do(http.MethodPost, fmt.Sprintf("/games/%s/players/%s/cards", gameId, playerId)),
+		http.StatusNoContent,
+	)
+}
+
+func (s *e2eSuite) listGames() []httpapi.Game {
+	s.t.Helper()
+	var resp httpapi.ListResponse[httpapi.Game]
+	s.decode(s.do(http.MethodGet, "/games"), http.StatusOK, &resp)
+	return resp.Items
+}
+
+func (s *e2eSuite) listPlayers(gameId string) []httpapi.Player {
+	s.t.Helper()
+	var resp httpapi.ListResponse[httpapi.Player]
+	s.decode(s.do(http.MethodGet, "/games/"+gameId+"/players"), http.StatusOK, &resp)
+	return resp.Items
+}
+
+func (s *e2eSuite) playerCards(gameId, playerId string) []httpapi.Card {
+	s.t.Helper()
+	var resp httpapi.ListResponse[httpapi.Card]
+	s.decode(
+		s.do(http.MethodGet, fmt.Sprintf("/games/%s/players/%s/cards", gameId, playerId)),
+		http.StatusOK, &resp,
+	)
+	return resp.Items
+}
+
+func (s *e2eSuite) cardsBySuit(gameId string) httpapi.GameCardsBySuite {
+	s.t.Helper()
+	var resp httpapi.GameCardsBySuite
+	s.decode(s.do(http.MethodGet, "/games/"+gameId+"/cards-by-suit"), http.StatusOK, &resp)
+	return resp
+}
+
+func (s *e2eSuite) cardCounts(gameId string) []httpapi.CardCount {
+	s.t.Helper()
+	var resp httpapi.ListResponse[httpapi.CardCount]
+	s.decode(s.do(http.MethodGet, "/games/"+gameId+"/card-counts"), http.StatusOK, &resp)
+	return resp.Items
+}
+
+// TestE2E_CreateAndDeleteGame verifies a game can be created, listed, and deleted.
+func TestE2E_CreateAndDeleteGame(t *testing.T) {
+	t.Parallel()
+	s := newE2ESuite(t)
+
+	gameId := s.createGame()
+
+	games := s.listGames()
+	ids := make([]string, len(games))
+	for i, g := range games {
+		ids[i] = g.GameId.UUID.String()
+	}
+	assert.Contains(t, ids, gameId)
+
+	s.mustStatus(s.do(http.MethodDelete, "/games/"+gameId), http.StatusNoContent)
+
+	games = s.listGames()
+	ids = make([]string, len(games))
+	for i, g := range games {
+		ids[i] = g.GameId.UUID.String()
+	}
+	assert.NotContains(t, ids, gameId)
+}
+
+// TestE2E_AddDeckDoublesCardCount verifies that add-deck appends a full 52-card deck
+// to a game that was created with one deck already (104 cards total after the call).
+func TestE2E_AddDeckDoublesCardCount(t *testing.T) {
+	t.Parallel()
+	s := newE2ESuite(t)
+
+	gameId := s.createGame()
+	playerId := s.addPlayer(gameId)
+
+	// deal all 52 cards from the initial deck
+	for range 52 {
+		s.dealCard(gameId, playerId)
+	}
+	assert.Len(t, s.playerCards(gameId, playerId), 52)
+
+	// add a second deck and verify 52 more can be dealt
+	s.addDeck(gameId)
+	for range 52 {
+		s.dealCard(gameId, playerId)
+	}
+	assert.Len(t, s.playerCards(gameId, playerId), 104)
+}
+
+// TestE2E_AddAndRemovePlayer verifies players can be added to a game and removed.
+func TestE2E_AddAndRemovePlayer(t *testing.T) {
+	t.Parallel()
+	s := newE2ESuite(t)
+
+	gameId := s.createGame()
+	playerId := s.addPlayer(gameId)
+
+	players := s.listPlayers(gameId)
+	ids := make([]string, len(players))
+	for i, p := range players {
+		ids[i] = p.Id.UUID.String()
+	}
+	assert.Contains(t, ids, playerId)
+
+	s.mustStatus(
+		s.do(http.MethodDelete, fmt.Sprintf("/games/%s/players/%s", gameId, playerId)),
+		http.StatusNoContent,
+	)
+
+	players = s.listPlayers(gameId)
+	ids = make([]string, len(players))
+	for i, p := range players {
+		ids[i] = p.Id.UUID.String()
+	}
+	assert.NotContains(t, ids, playerId)
+}
+
+// TestE2E_ShuffleDealAllCards verifies that shuffle + 52 deal calls yields all 52 unique cards,
+// and a 53rd deal is silently ignored (deck exhausted).
+func TestE2E_ShuffleDealAllCards(t *testing.T) {
+	t.Parallel()
+	s := newE2ESuite(t)
+
+	gameId := s.createGame() // Create already seeds one full deck
+	s.shuffle(gameId)
+	playerId := s.addPlayer(gameId)
+
+	for range 52 {
+		s.dealCard(gameId, playerId)
+	}
+
+	cards := s.playerCards(gameId, playerId)
+	require.Len(t, cards, 52)
+
+	seen := make(map[string]bool, 52)
+	for _, c := range cards {
+		assert.False(t, seen[c.Id], "duplicate card dealt: %s", c.Id)
+		seen[c.Id] = true
+	}
+
+	// 53rd deal: deck is empty, card count must stay at 52
+	s.dealCard(gameId, playerId)
+	assert.Len(t, s.playerCards(gameId, playerId), 52)
+}
+
+// TestE2E_PlayerHandSortedDescending verifies GET /players returns players sorted
+// from highest to lowest hand value, as required by the spec.
+// Uses an unshuffled deck so card values are deterministic:
+// Next() pops from the end — first deals are Spades 13, 12, 11, ...
+func TestE2E_PlayerHandSortedDescending(t *testing.T) {
+	t.Parallel()
+	s := newE2ESuite(t)
+
+	gameId := s.createGame() // Create already seeds one full deck
+
+	playerA := s.addPlayer(gameId) // will receive 5 cards: ♠13+12+11+10+9 = 55
+	playerB := s.addPlayer(gameId) // will receive 3 cards: ♠8+7+6 = 21
+	playerC := s.addPlayer(gameId) // will receive 1 card:  ♠5 = 5
+
+	for range 5 {
+		s.dealCard(gameId, playerA)
+	}
+	for range 3 {
+		s.dealCard(gameId, playerB)
+	}
+	s.dealCard(gameId, playerC)
+
+	players := s.listPlayers(gameId)
+	require.Len(t, players, 3)
+
+	// Totals must be non-increasing
+	for i := 1; i < len(players); i++ {
+		assert.GreaterOrEqual(t, players[i-1].CardsTotal, players[i].CardsTotal,
+			"player at index %d (total %d) should not outrank index %d (total %d)",
+			i, players[i].CardsTotal, i-1, players[i-1].CardsTotal,
+		)
+	}
+
+	// Verify expected totals are present (order must be A > B > C)
+	totals := []int{players[0].CardsTotal, players[1].CardsTotal, players[2].CardsTotal}
+	assert.Equal(t, []int{55, 21, 5}, totals)
+
+	// Verify IDs match expected positions
+	assert.Equal(t, playerA, players[0].Id.UUID.String())
+	assert.Equal(t, playerB, players[1].Id.UUID.String())
+	assert.Equal(t, playerC, players[2].Id.UUID.String())
+}
+
+// TestE2E_CardsBySuit verifies undealt card counts per suit are tracked correctly.
+// After dealing 3 cards from an unshuffled deck (all from Spades), spades drops by 3.
+func TestE2E_CardsBySuit(t *testing.T) {
+	t.Parallel()
+	s := newE2ESuite(t)
+
+	gameId := s.createGame() // Create already seeds one full deck
+	playerId := s.addPlayer(gameId)
+
+	for range 3 {
+		s.dealCard(gameId, playerId)
+	}
+
+	counts := s.cardsBySuit(gameId)
+	assert.Equal(t, 13, counts.Hearts)
+	assert.Equal(t, 13, counts.Diamonds)
+	assert.Equal(t, 13, counts.Clubs)
+	assert.Equal(t, 10, counts.Spades) // 3 spades dealt
+	assert.Equal(t, 49, counts.Hearts+counts.Diamonds+counts.Clubs+counts.Spades)
+}
+
+// TestE2E_CardCountsSorted verifies the card-counts endpoint returns cards sorted
+// by suit (hearts → spades → clubs → diamonds) then face value high to low (13 → 1).
+func TestE2E_CardCountsSorted(t *testing.T) {
+	t.Parallel()
+	s := newE2ESuite(t)
+
+	gameId := s.createGame() // Create already seeds one full deck
+
+	counts := s.cardCounts(gameId)
+	require.Len(t, counts, 52)
+
+	suitOrder := []string{"hearts", "spades", "clubs", "diamonds"}
+	for suitIdx, suit := range suitOrder {
+		offset := suitIdx * 13
+		for valueIdx := range 13 {
+			c := counts[offset+valueIdx]
+			assert.Equal(t, suit, c.Card.Suit,
+				"index %d: expected suit %s", offset+valueIdx, suit)
+			assert.Equal(t, 13-valueIdx, c.Card.FaceValue,
+				"index %d: expected face value %d", offset+valueIdx, 13-valueIdx)
+			assert.Equal(t, 1, c.Count)
+		}
+	}
+}

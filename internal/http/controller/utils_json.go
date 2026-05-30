@@ -23,25 +23,3 @@ func writeJson(w http.ResponseWriter, code int, data any) error {
 
 	return nil
 }
-
-func unmarshalJson(r *http.Request, data any) error {
-	if reflect.TypeOf(data).Kind() != reflect.Ptr {
-		return fmt.Errorf("data must be a pointer")
-	}
-
-	decoder := json.NewDecoder(r.Body)
-	decoder.DisallowUnknownFields()
-
-	err := decoder.Decode(data)
-	if err != nil {
-		if err.Error() == "EOF" {
-			err = fmt.Errorf("request body not present")
-		}
-
-		return newErrApiResponse(http.StatusBadRequest, "failed to unmarshal request body json: %v", err.Error())
-	}
-
-	defer r.Body.Close()
-
-	return nil
-}

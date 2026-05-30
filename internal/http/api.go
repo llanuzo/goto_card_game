@@ -65,6 +65,10 @@ func (a Api) Shutdown(ctx context.Context) error {
 	return nil
 }
 
+func (a Api) Handler() http.Handler {
+	return a.server.Handler
+}
+
 func (a Api) addRoute(r *mux.Router, method string, path string, handler HandlerWithError, middlewares ...mux.MiddlewareFunc) {
 	var httpHandlerFunc http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
 		err := handler(w, r)

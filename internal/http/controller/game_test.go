@@ -10,8 +10,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	svcgenmock "github.com/llanuzo/card-game/internal/service/genmock"
 	"github.com/llanuzo/card-game/internal/service"
+	svcgenmock "github.com/llanuzo/card-game/internal/service/genmock"
 	"github.com/llanuzo/card-game/internal/service/svcmodel"
 	"github.com/llanuzo/card-game/pkg/httpapi"
 	"github.com/stretchr/testify/assert"

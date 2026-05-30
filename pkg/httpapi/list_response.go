@@ -8,7 +8,7 @@ type ListResponseItem[T any] interface {
 }
 
 type ListResponse[T any] struct {
-	Items               []T    `json:"items"`
+	Items []T `json:"items"`
 }
 
 func NewListResponse[T any](itemsLen int, getter func(i int) ListResponseItem[T]) ListResponse[T] {
