@@ -33,9 +33,28 @@ While this is a trivial assignment, please pretend that this code will become a 
 AI: You may use generative AI tools to help you complete this. The use of such tools is encouraged at GoTo. If AI is used, include a description of the process and interactions you had with AI tools while completing this assignment, including how you used them and how they influenced your design or implementation decisions. Additionally, export and submit your full chat/prompt session with the AI agent so we can review it.
 Note: You will be evaluated based on how the decision making of the homework can be integrated as the basis of a new product. You will be asked in-depth questions about your decision-making process in the live interview.
 
-## Mockery
+## Interviewer
+AI session logs are in claude.log
 
-Tool used for generating mocks for testing. See .mockery.yml for configuration.
+## Development
+
+### Endpoints
+Endpoints documented in OpenAPI spec [here](openapi/openapi.yml)
+
+The endpoints are on port `8080`
+
+### Metrics
+Both pprof and prometheus metrics are on port `10001`
+
+e.g.
+```
+http://localhost:10001/metrics
+
+http://localhost:10001/debug/pprof/heap
+```
+
+### Mockery
+Tool used for generating mocks for testing. See .mockery.yml for configuration
 
 ```bash
 go install github.com/vektra/mockery/v3@v3.7.0
