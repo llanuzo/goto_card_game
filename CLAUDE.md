@@ -9,6 +9,9 @@ This is a card game implementation for a goto interview challenge. The project i
 ## Rules
 
 - Never create git commits. The user handles all git interactions.
+- End every assistant turn by appending a one-sentence summary to claude.log:
+  `printf '[%s] ASSISTANT: <summary>\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" >> /home/llanuzo/interview-challenges/goto_card_game_llanuzo/claude.log`
+  The Stop hook automatically appends `ASSISTANT TURN COMPLETE\n---` after.
 
 ## Commands
 
