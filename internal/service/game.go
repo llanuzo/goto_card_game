@@ -21,6 +21,7 @@ type Game interface {
 	GetCardsBySuit(gameId uuid.UUID) (map[svcmodel.CardSuit]int, error)
 	List() []*svcmodel.Game
 	ListCardCounts(gameId uuid.UUID) ([]svcmodel.CardCount, error)
+	Shuffle(gameId uuid.UUID) error
 }
 
 type game struct {
@@ -149,6 +150,17 @@ func (s *game) AddDeck(gameId uuid.UUID) error {
 	}
 
 	game.Cards.Append(s.newDeck())
+
+	return nil
+}
+
+func (s *game) Shuffle(gameId uuid.UUID) error {
+	game, ok := s.games.Load(gameId)
+	if !ok {
+		return ErrGameNotFound
+	}
+
+	game.Cards.Shuffle()
 
 	return nil
 }

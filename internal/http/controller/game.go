@@ -117,3 +117,22 @@ func (c Games) AddDeck(w http.ResponseWriter, r *http.Request) error {
 	w.WriteHeader(http.StatusNoContent)
 	return nil
 }
+
+func (c Games) Shuffle(w http.ResponseWriter, r *http.Request) error {
+	gameId, err := loadUuidFromPath(r, PathId1)
+	if err != nil {
+		return err
+	}
+
+	err = c.game.Shuffle(gameId)
+	if err != nil {
+		if errors.Is(err, service.ErrGameNotFound) {
+			return newErrApiResponse(http.StatusNotFound, "game id %s does not exist", gameId)
+		}
+
+		return err
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+	return nil
+}

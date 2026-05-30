@@ -2,6 +2,7 @@ package svcmodel
 
 import (
 	"fmt"
+	"math/rand/v2"
 	"sync"
 
 	"github.com/llanuzo/card-game/pkg/httpapi"
@@ -61,4 +62,14 @@ func (m *Cards) All() []Card {
 	copySlice := make([]Card, len(m.cards))
 	copy(copySlice, m.cards)
 	return copySlice
+}
+
+func (m *Cards) Shuffle() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	// TODO: rework this later if time, not supposed to use it
+	rand.Shuffle(len(m.cards), func(i, j int) {
+		m.cards[i], m.cards[j] = m.cards[j], m.cards[i]
+	})
 }

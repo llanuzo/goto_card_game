@@ -97,7 +97,7 @@ paths:
                         type: array
                         items:
                           $ref: "#/components/schemas/CardCount"
-  /games/{gameId}/decks:
+  /games/{gameId}/add-deck:
     post:
       tags:
         - Card Game
