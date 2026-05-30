@@ -133,13 +133,14 @@ func (s *game) ListCardCounts(gameId uuid.UUID) ([]svcmodel.CardCount, error) {
 		svcmodel.CardSuit_Diamonds,
 	}
 
-	var ordersBySuites []svcmodel.CardCount
-	for _, val := range suitesOrder {
-		for _, card := range cardCounts {
-			if val == card.Suit {
-				ordersBySuites = append(ordersBySuites, card)
-			}
-		}
+	bySuit := make(map[svcmodel.CardSuit][]svcmodel.CardCount, len(suitesOrder))
+	for _, cc := range cardCounts {
+		bySuit[cc.Suit] = append(bySuit[cc.Suit], cc)
+	}
+
+	ordersBySuites := make([]svcmodel.CardCount, 0, len(cardCounts))
+	for _, suit := range suitesOrder {
+		ordersBySuites = append(ordersBySuites, bySuit[suit]...)
 	}
 
 	return ordersBySuites, nil
