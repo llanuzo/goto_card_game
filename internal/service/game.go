@@ -236,7 +236,10 @@ func (s *game) AddPlayerCard(gameId uuid.UUID, playerId uuid.UUID) error {
 		return ErrPlayerNotFound
 	}
 
-	player.Cards.Append([]svcmodel.Card{game.Cards.Next()})
+	card, ok := game.Cards.Next()
+	if ok {
+		player.Cards.Append([]svcmodel.Card{card})
+	}
 
 	return nil
 }

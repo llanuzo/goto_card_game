@@ -67,16 +67,27 @@ func TestCards_All_ReturnsCopy(t *testing.T) {
 func TestCards_Next(t *testing.T) {
 	t.Parallel()
 
-	cards := NewCards()
-	cards.Append([]Card{
-		{Value: 1, Suit: CardSuit_Hearts},
-		{Value: 2, Suit: CardSuit_Diamonds},
+	t.Run("next returns tail of slice", func(t *testing.T) {
+		cards := NewCards()
+		cards.Append([]Card{
+			{Value: 1, Suit: CardSuit_Hearts},
+			{Value: 2, Suit: CardSuit_Diamonds},
+		})
+
+		got, ok := cards.Next()
+		assert.True(t, ok)
+		assert.Equal(t, Card{Value: 2, Suit: CardSuit_Diamonds}, got)
+		assert.Len(t, cards.All(), 1)
 	})
 
-	// Next pops from the end
-	got := cards.Next()
-	assert.Equal(t, Card{Value: 2, Suit: CardSuit_Diamonds}, got)
-	assert.Len(t, cards.All(), 1)
+	t.Run("next with no cards returns not ok", func(t *testing.T) {
+		cards := NewCards()
+		cards.Append([]Card{})
+
+		_, ok := cards.Next()
+		assert.False(t, ok)
+	})
+
 }
 
 func TestCards_Shuffle(t *testing.T) {

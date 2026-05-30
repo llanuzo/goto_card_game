@@ -49,14 +49,18 @@ func (m *Cards) Append(card []Card) {
 	m.cards = append(m.cards, card...)
 }
 
-func (m *Cards) Next() Card {
+func (m *Cards) Next() (Card, bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+
+	if len(m.cards) == 0 {
+		return Card{}, false
+	}
 
 	card := m.cards[len(m.cards)-1]
 	m.cards = m.cards[:len(m.cards)-1]
 
-	return card
+	return card, true
 }
 
 func (m *Cards) All() []Card {
