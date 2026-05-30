@@ -18,6 +18,7 @@ var (
 type Game interface {
 	AddDeck(gameId uuid.UUID) error
 	AddPlayer(gameId uuid.UUID) (*svcmodel.Player, error)
+	AddPlayerCard(gameId uuid.UUID, playerId uuid.UUID) error
 	Create() *svcmodel.Game
 	Delete(gameId uuid.UUID) error
 	DeletePlayer(gameId, playerId uuid.UUID) error
@@ -26,9 +27,7 @@ type Game interface {
 	ListPlayers(gameId uuid.UUID) ([]*svcmodel.Player, error)
 	ListPlayersCards(gameId uuid.UUID, playerId uuid.UUID) ([]svcmodel.Card, error)
 	ListCardCounts(gameId uuid.UUID) ([]svcmodel.CardCount, error)
-
 	Shuffle(gameId uuid.UUID) error
-	DealCard(gameId uuid.UUID, playerId uuid.UUID) error
 }
 
 type game struct {
@@ -229,7 +228,7 @@ func (s *game) ListPlayersCards(gameId uuid.UUID, playerId uuid.UUID) ([]svcmode
 	return player.Cards.All(), nil
 }
 
-func (s *game) DealCard(gameId uuid.UUID, playerId uuid.UUID) error {
+func (s *game) AddPlayerCard(gameId uuid.UUID, playerId uuid.UUID) error {
 	game, err := s.getGame(gameId)
 	if err != nil {
 		return err

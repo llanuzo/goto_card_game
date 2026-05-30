@@ -241,7 +241,7 @@ func (c Games) PostPlayerCard(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	err = c.game.DealCard(gameId, playerId)
+	err = c.game.AddPlayerCard(gameId, playerId)
 	if err != nil {
 		if errors.Is(err, service.ErrGameNotFound) {
 			return newErrApiResponse(http.StatusNotFound, "game %s does not exist", gameId)
