@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/llanuzo/card-game/internal/service"
+	"github.com/llanuzo/card-game/internal/service/svcmodel"
 	"github.com/llanuzo/card-game/pkg/httpapi"
 )
 
@@ -59,7 +60,7 @@ func (c Games) GetCardsBySuit(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	resp, err := c.game.ListCardsBySuit(gameId)
+	cardsMap, err := c.game.ListCardsBySuit(gameId)
 	if err != nil {
 		if errors.Is(err, service.ErrGameNotFound) {
 			return newErrApiResponse(http.StatusNotFound, "game id %s does not exist", gameId)
@@ -68,5 +69,10 @@ func (c Games) GetCardsBySuit(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	return writeJson(w, http.StatusOK, &resp)
+	return writeJson(w, http.StatusOK, &httpapi.GameCardsBySuite{
+		Hearts:   cardsMap[svcmodel.CardSuit_Hearts],
+		Diamonds: cardsMap[svcmodel.CardSuit_Diamonds],
+		Clubs:    cardsMap[svcmodel.CardSuit_Clubs],
+		Spades:   cardsMap[svcmodel.CardSuit_Spades],
+	})
 }

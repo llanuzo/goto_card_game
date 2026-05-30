@@ -17,7 +17,7 @@ type Game interface {
 	Create() *svcmodel.Game
 	Delete(gameId uuid.UUID) error
 	List() []*svcmodel.Game
-	ListCardsBySuit(gameId uuid.UUID) (map[string]int, error)
+	ListCardsBySuit(gameId uuid.UUID) (map[svcmodel.CardSuit]int, error)
 }
 
 type game struct {
@@ -64,38 +64,53 @@ func (s *game) Delete(gameId uuid.UUID) error {
 	return nil
 }
 
-func (s *game) ListCardsBySuit(gameId uuid.UUID) (map[string]int, error) {
+func (s *game) ListCardsBySuit(gameId uuid.UUID) (map[svcmodel.CardSuit]int, error) {
 	game, ok := s.games.Load(gameId)
 	if !ok {
 		return nil, ErrGameNotFound
 	}
 
-	cardsBySuit := make(map[string]int)
+	var heartsCount int
+	var diamondsCount int
+	var clubsCount int
+	var spadesCount int
+
 	for _, val := range game.Cards.All() {
-		cardsBySuit[val.Suit.String()] = cardsBySuit[val.Suit.String()] + 1
+		switch val.Suit {
+		case svcmodel.CardSuit_Hearts:
+			heartsCount++
+		case svcmodel.CardSuit_Diamonds:
+			diamondsCount++
+		case svcmodel.CardSuit_Clubs:
+			clubsCount++
+		case svcmodel.CardSuit_Spades:
+			spadesCount++
+		}
 	}
 
-	return cardsBySuit, nil
+	return map[svcmodel.CardSuit]int{
+		svcmodel.CardSuit_Hearts:   heartsCount,
+		svcmodel.CardSuit_Diamonds: diamondsCount,
+		svcmodel.CardSuit_Clubs:    clubsCount,
+		svcmodel.CardSuit_Spades:   spadesCount,
+	}, nil
 }
 
 func (s *game) newDeck() []svcmodel.Card {
 	cardValStart := 1
 	cardValEnd := 13
 
-	suits := svcmodel.CardSuitValues()
-
 	nbOfValues := cardValEnd - cardValStart + 1
-	deck := make([]svcmodel.Card, len(suits)*nbOfValues)
+	suites := svcmodel.CardSuitValues()
+	deck := make([]svcmodel.Card, len(suites)*nbOfValues)
 
-	var i int
-	for suit := range svcmodel.CardSuitValues() {
+	for i, suit := range suites {
 		for j := cardValStart; j <= cardValEnd; j++ {
 			deck[(i*nbOfValues)+j-1] = svcmodel.Card{
 				Value: uint8(j),
 				Suit:  suit,
 			}
 		}
-		i++
 	}
 
 	return deck
