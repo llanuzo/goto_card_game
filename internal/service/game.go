@@ -1,6 +1,7 @@
 package service
 
 import (
+	"cmp"
 	"errors"
 	"slices"
 	"strings"
@@ -17,7 +18,8 @@ type Game interface {
 	Create() *svcmodel.Game
 	Delete(gameId uuid.UUID) error
 	List() []*svcmodel.Game
-	ListCardsBySuit(gameId uuid.UUID) (map[svcmodel.CardSuit]int, error)
+	GetCardsBySuit(gameId uuid.UUID) (map[svcmodel.CardSuit]int, error)
+	ListCardCounts(gameId uuid.UUID) ([]svcmodel.CardCount, error)
 }
 
 type game struct {
@@ -64,7 +66,7 @@ func (s *game) Delete(gameId uuid.UUID) error {
 	return nil
 }
 
-func (s *game) ListCardsBySuit(gameId uuid.UUID) (map[svcmodel.CardSuit]int, error) {
+func (s *game) GetCardsBySuit(gameId uuid.UUID) (map[svcmodel.CardSuit]int, error) {
 	game, ok := s.games.Load(gameId)
 	if !ok {
 		return nil, ErrGameNotFound
@@ -94,6 +96,52 @@ func (s *game) ListCardsBySuit(gameId uuid.UUID) (map[svcmodel.CardSuit]int, err
 		svcmodel.CardSuit_Clubs:    clubsCount,
 		svcmodel.CardSuit_Spades:   spadesCount,
 	}, nil
+}
+
+func (s *game) ListCardCounts(gameId uuid.UUID) ([]svcmodel.CardCount, error) {
+	game, ok := s.games.Load(gameId)
+	if !ok {
+		return nil, ErrGameNotFound
+	}
+
+	cardCountMap := make(map[svcmodel.Card]int)
+
+	for _, card := range game.Cards.All() {
+		cardCountMap[card] = cardCountMap[card] + 1
+	}
+
+	cardCounts := make([]svcmodel.CardCount, len(cardCountMap))
+
+	var i int
+	for card, count := range cardCountMap {
+		cardCounts[i] = svcmodel.CardCount{
+			Card:  card,
+			Count: count,
+		}
+		i++
+	}
+
+	slices.SortFunc(cardCounts, func(a, b svcmodel.CardCount) int {
+		return cmp.Compare(b.Card.Value, a.Card.Value)
+	})
+
+	suitesOrder := []svcmodel.CardSuit{
+		svcmodel.CardSuit_Hearts,
+		svcmodel.CardSuit_Spades,
+		svcmodel.CardSuit_Clubs,
+		svcmodel.CardSuit_Diamonds,
+	}
+
+	var ordersBySuites []svcmodel.CardCount
+	for _, val := range suitesOrder {
+		for _, card := range cardCounts {
+			if val == card.Suit {
+				ordersBySuites = append(ordersBySuites, card)
+			}
+		}
+	}
+
+	return ordersBySuites, nil
 }
 
 func (s *game) newDeck() []svcmodel.Card {

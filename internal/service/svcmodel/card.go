@@ -1,10 +1,31 @@
 package svcmodel
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+
+	"github.com/llanuzo/card-game/pkg/httpapi"
+)
 
 type Card struct {
 	Value uint8
 	Suit  CardSuit
+}
+
+type CardCount struct {
+	Card
+	Count int
+}
+
+func (m CardCount) ToHttp() httpapi.CardCount {
+	return httpapi.CardCount{
+		Card: httpapi.Card{
+			Id:        fmt.Sprintf("%d_%s", m.Value, m.Suit),
+			Suit:      m.Suit.String(),
+			FaceValue: int(m.Value),
+		},
+		Count: m.Count,
+	}
 }
 
 type Cards struct {

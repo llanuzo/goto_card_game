@@ -36,6 +36,7 @@ func NewApi(port int, game service.Game) Api {
 	api.addRoute(r, http.MethodPost, "/games", games.Post)
 	api.addRoute(r, http.MethodDelete, "/games/{id1}", games.Delete)
 	api.addRoute(r, http.MethodGet, "/games/{id1}/cards-by-suit", games.GetCardsBySuit)
+	api.addRoute(r, http.MethodGet, "/games/{id1}/card-counts", games.ListCardCounts)
 
 	return api
 }

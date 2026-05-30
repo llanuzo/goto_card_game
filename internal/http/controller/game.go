@@ -60,7 +60,7 @@ func (c Games) GetCardsBySuit(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	cardsMap, err := c.game.ListCardsBySuit(gameId)
+	cardsMap, err := c.game.GetCardsBySuit(gameId)
 	if err != nil {
 		if errors.Is(err, service.ErrGameNotFound) {
 			return newErrApiResponse(http.StatusNotFound, "game id %s does not exist", gameId)
@@ -75,4 +75,26 @@ func (c Games) GetCardsBySuit(w http.ResponseWriter, r *http.Request) error {
 		Clubs:    cardsMap[svcmodel.CardSuit_Clubs],
 		Spades:   cardsMap[svcmodel.CardSuit_Spades],
 	})
+}
+
+func (c Games) ListCardCounts(w http.ResponseWriter, r *http.Request) error {
+	gameId, err := loadUuidFromPath(r, PathId1)
+	if err != nil {
+		return err
+	}
+
+	cardCounts, err := c.game.ListCardCounts(gameId)
+	if err != nil {
+		if errors.Is(err, service.ErrGameNotFound) {
+			return newErrApiResponse(http.StatusNotFound, "game id %s does not exist", gameId)
+		}
+
+		return err
+	}
+
+	listResp := httpapi.NewListResponse(len(cardCounts), func(i int) httpapi.ListResponseItem[httpapi.CardCount] {
+		return cardCounts[i]
+	})
+
+	return writeJson(w, http.StatusOK, &listResp)
 }

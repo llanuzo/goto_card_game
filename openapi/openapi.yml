@@ -74,7 +74,7 @@ paths:
                     type: integer
                   clubs:
                     type: integer
-  /games/{gameId}/cards-by-value:
+  /games/{gameId}/card-counts:
     get:
       tags:
         - Card Game
@@ -96,12 +96,7 @@ paths:
                       items:
                         type: array
                         items:
-                          allOf:
-                            - $ref: "#/components/schemas/Card"
-                            - type: object
-                              properties:
-                                remaining_count:
-                                  type: integer
+                          $ref: "#/components/schemas/CardCount"
   /games/{gameId}/decks:
     post:
       tags:
@@ -223,10 +218,17 @@ components:
     Card:
       type: object
       properties:
-        value:
+        face_value:
           $ref: "#/components/schemas/TypeCardValue"
         suit:
           $ref: "#/components/schemas/TypeSuit"
+    CardCount:
+      type: object
+      properties:
+        card:
+          $ref: "#/components/schemas/Card"
+        count:
+          type: integer
     Game:
       type: object
       properties:
