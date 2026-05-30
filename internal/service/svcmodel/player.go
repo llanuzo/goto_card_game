@@ -1,7 +1,6 @@
 package svcmodel
 
 import (
-	"maps"
 	"sync"
 
 	"github.com/google/uuid"
@@ -81,7 +80,11 @@ func (m *Players) All() map[uuid.UUID]*Player {
 	defer m.mu.Unlock()
 
 	copy := make(map[uuid.UUID]*Player, len(m.players))
-	maps.Copy(copy, m.players)
+	for id, p := range m.players {
+		playerCopy := &Player{Id: p.Id, Cards: NewCards()}
+		playerCopy.Cards.Append(p.Cards.All())
+		copy[id] = playerCopy
+	}
 
 	return copy
 }

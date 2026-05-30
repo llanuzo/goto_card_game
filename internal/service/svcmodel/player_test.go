@@ -3,6 +3,7 @@
 package svcmodel
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -143,6 +144,32 @@ func TestPlayers_All(t *testing.T) {
 	assert.Len(t, all, 2)
 	assert.Contains(t, all, p1.Id)
 	assert.Contains(t, all, p2.Id)
+}
+
+func TestPlayers_All_SnapshotIsolatedFromConcurrentMutations(t *testing.T) {
+	t.Parallel()
+
+	ps := NewPlayers()
+	p := NewPlayer()
+	p.Cards.Append([]Card{{Value: 5, Suit: CardSuit_Hearts}})
+	ps.Add(p)
+
+	snapshot := ps.All()
+	totalBefore := snapshot[p.Id].CardTotal()
+
+	// concurrently add cards to the live player
+	var wg sync.WaitGroup
+	for range 50 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			p.Cards.Append([]Card{{Value: 1, Suit: CardSuit_Clubs}})
+		}()
+	}
+	wg.Wait()
+
+	// snapshot must be unaffected
+	assert.Equal(t, totalBefore, snapshot[p.Id].CardTotal())
 }
 
 func TestPlayers_All_ReturnsCopy(t *testing.T) {
