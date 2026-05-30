@@ -76,8 +76,13 @@ func (m *Cards) Shuffle() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	// TODO: rework this later if time, not supposed to use it
-	rand.Shuffle(len(m.cards), func(i, j int) {
-		m.cards[i], m.cards[j] = m.cards[j], m.cards[i]
-	})
+	// Shuffle by randomly selecting 2 indexes and swap
+	// Do it by a factor of the cardLen just to make sure it shuffles enough
+	cardLen := len(m.cards)
+	for range cardLen * 10 {
+		p1 := rand.IntN(cardLen)
+		p2 := rand.IntN(cardLen)
+
+		m.cards[p1], m.cards[p2] = m.cards[p2], m.cards[p1]
+	}
 }
