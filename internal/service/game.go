@@ -15,10 +15,11 @@ var (
 )
 
 type Game interface {
+	AddDeck(gameId uuid.UUID) error
 	Create() *svcmodel.Game
 	Delete(gameId uuid.UUID) error
-	List() []*svcmodel.Game
 	GetCardsBySuit(gameId uuid.UUID) (map[svcmodel.CardSuit]int, error)
+	List() []*svcmodel.Game
 	ListCardCounts(gameId uuid.UUID) ([]svcmodel.CardCount, error)
 }
 
@@ -55,9 +56,6 @@ func (s *game) Create() *svcmodel.Game {
 }
 
 func (s *game) Delete(gameId uuid.UUID) error {
-	game := svcmodel.NewGame(uuid.New())
-	game.Cards.Append(s.newDeck())
-
 	deleted := s.games.Delete(gameId)
 	if !deleted {
 		return ErrGameNotFound
@@ -142,6 +140,17 @@ func (s *game) ListCardCounts(gameId uuid.UUID) ([]svcmodel.CardCount, error) {
 	}
 
 	return ordersBySuites, nil
+}
+
+func (s *game) AddDeck(gameId uuid.UUID) error {
+	game, ok := s.games.Load(gameId)
+	if !ok {
+		return ErrGameNotFound
+	}
+
+	game.Cards.Append(s.newDeck())
+
+	return nil
 }
 
 func (s *game) newDeck() []svcmodel.Card {

@@ -98,3 +98,22 @@ func (c Games) ListCardCounts(w http.ResponseWriter, r *http.Request) error {
 
 	return writeJson(w, http.StatusOK, &listResp)
 }
+
+func (c Games) AddDeck(w http.ResponseWriter, r *http.Request) error {
+	gameId, err := loadUuidFromPath(r, PathId1)
+	if err != nil {
+		return err
+	}
+
+	err = c.game.AddDeck(gameId)
+	if err != nil {
+		if errors.Is(err, service.ErrGameNotFound) {
+			return newErrApiResponse(http.StatusNotFound, "game id %s does not exist", gameId)
+		}
+
+		return err
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+	return nil
+}
