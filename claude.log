@@ -112,3 +112,11 @@
 [2026-05-30T05:45:39Z] ASSISTANT: Reviewed the service layer and reported 6 issues: biased Shuffle algorithm (non-Fisher-Yates), Shuffle panic on empty deck, silent success on empty-deck deal, O(S×N) nested loop in ListCardCounts, auto-seeding deck in Create(), and expensive deep-copy on every ListPlayers call.
 [2026-05-30T05:45:41Z] ASSISTANT TURN COMPLETE
 ---
+[2026-05-30T05:57:19Z] USER: which issue are still there
+[2026-05-30T05:58:17Z] USER: i believe i correct #2
+[2026-05-30T05:58:24Z] ASSISTANT TURN COMPLETE
+---
+[2026-05-30T05:59:50Z] USER: i fixed #5, update the e2e tests
+[2026-05-30T06:01:52Z] ASSISTANT: Updated e2e tests in api_test.go to add explicit addDeck() calls after Create() following the removal of auto-deck seeding; all 7 tests pass with -race.
+[2026-05-30T06:01:54Z] ASSISTANT TURN COMPLETE
+---

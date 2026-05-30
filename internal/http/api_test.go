@@ -156,9 +156,10 @@ func TestE2E_AddDeckDoublesCardCount(t *testing.T) {
 	s := newE2ESuite(t)
 
 	gameId := s.createGame()
+	s.addDeck(gameId)
 	playerId := s.addPlayer(gameId)
 
-	// deal all 52 cards from the initial deck
+	// deal all 52 cards from the first deck
 	for range 52 {
 		s.dealCard(gameId, playerId)
 	}
@@ -206,7 +207,8 @@ func TestE2E_ShuffleDealAllCards(t *testing.T) {
 	t.Parallel()
 	s := newE2ESuite(t)
 
-	gameId := s.createGame() // Create already seeds one full deck
+	gameId := s.createGame()
+	s.addDeck(gameId)
 	s.shuffle(gameId)
 	playerId := s.addPlayer(gameId)
 
@@ -236,7 +238,8 @@ func TestE2E_PlayerHandSortedDescending(t *testing.T) {
 	t.Parallel()
 	s := newE2ESuite(t)
 
-	gameId := s.createGame() // Create already seeds one full deck
+	gameId := s.createGame()
+	s.addDeck(gameId)
 
 	playerA := s.addPlayer(gameId) // will receive 5 cards: ♠13+12+11+10+9 = 55
 	playerB := s.addPlayer(gameId) // will receive 3 cards: ♠8+7+6 = 21
@@ -277,7 +280,8 @@ func TestE2E_CardsBySuit(t *testing.T) {
 	t.Parallel()
 	s := newE2ESuite(t)
 
-	gameId := s.createGame() // Create already seeds one full deck
+	gameId := s.createGame()
+	s.addDeck(gameId)
 	playerId := s.addPlayer(gameId)
 
 	for range 3 {
@@ -298,7 +302,8 @@ func TestE2E_CardCountsSorted(t *testing.T) {
 	t.Parallel()
 	s := newE2ESuite(t)
 
-	gameId := s.createGame() // Create already seeds one full deck
+	gameId := s.createGame()
+	s.addDeck(gameId)
 
 	counts := s.cardCounts(gameId)
 	require.Len(t, counts, 52)

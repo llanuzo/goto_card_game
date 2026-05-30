@@ -52,7 +52,6 @@ func (s *game) List() []*svcmodel.Game {
 
 func (s *game) Create() *svcmodel.Game {
 	game := svcmodel.NewGame(uuid.New())
-	game.Cards.Append(s.newDeck())
 
 	s.games.Add(game)
 
